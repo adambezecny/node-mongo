@@ -1,46 +1,36 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 
-const url = 'mongodb://localhost:27017/conFusion';
+const dboper = require('./operations');
+
+const url = 'mongodb://localhost:27017/test';
 
 MongoClient.connect(url, (err,database) => {
 
     assert.equal(err, null);
-    console.log('Connected correctly to mongo server');
-
     const db = database.db("conFusion");
 
-    db.collection("dishes", (err, collection) => {
+    console.log('Connected correctly to mongo server');
 
-        assert.equal(err, null);
+    dboper.insertDocuments(db, {name: "Vadonut", description: "Test"}, "dishes", (result) => {
+        console.log("Inserted Document:\n", result.ops);
 
-        collection.insertOne({"name": "Uhtapizza2","description":"Test2"},
-            (err, result) => {
-                assert.equal(err, null);
-                console.log("After Insert:\n");
-                console.log(result.ops);
+        dboper.findDocuments(db, "dishes", (docs) => {
+            console.log("Found Documents:\n", docs);
 
-                collection.find({}).toArray((err, docs) => {
-                    assert.equal(err, null);
+            dboper.updateDocument(db, {name: "Vadonut"}, {description: "Updated Test"}, "dishes", (result) => {
+                console.log("Updated Document:\n", result.result);
 
-                    console.log("Found:\n");
-                    console.log(docs);
 
-                    //database.close();
-
-                    db.dropCollection("dishes", (err, result) => {
-                        assert.equal(err, null);
-                        database.close();
-                        console.log("mongo db closed");
-                    });
+                dboper.findDocuments(db, "dishes", (docs) => {
+                    console.log("Updated Documents:\n", docs);
+                    //db.dropCollection("dishes", (result) => {
+                    //    console.log("Dropped collection", result);
+                    //    database.close();
+                    //});
+                    database.close();
                 });
-
-            }
-        );        
-        
-
+            });
+        });
     });
-
-
-
 });
