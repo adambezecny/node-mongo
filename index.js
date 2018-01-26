@@ -5,32 +5,42 @@ const dboper = require('./operations');
 
 const url = 'mongodb://localhost:27017/test';
 
-MongoClient.connect(url, (err,database) => {
+MongoClient.connect(url).then((database) => {
 
-    assert.equal(err, null);
     const db = database.db("conFusion");
 
     console.log('Connected correctly to mongo server');
 
-    dboper.insertDocuments(db, {name: "Vadonut", description: "Test"}, "dishes", (result) => {
-        console.log("Inserted Document:\n", result.ops);
+    dboper.insertDocuments(db, { name: "Vadonut", description: "Test"}, "dishes")
+        .then((result) => {
+            console.log("Insert Document:\n", result.ops);
 
-        dboper.findDocuments(db, "dishes", (docs) => {
+            return dboper.findDocuments(db, "dishes");
+        })
+        .then((docs) => {
             console.log("Found Documents:\n", docs);
 
-            dboper.updateDocument(db, {name: "Vadonut"}, {description: "Updated Test"}, "dishes", (result) => {
-                console.log("Updated Document:\n", result.result);
+            return dboper.updateDocument(db, { name: "Vadonut" },
+                    { description: "Updated Test" }, "dishes");
 
+        })
+        .then((result) => {
+            console.log("Updated Document:\n", result.result);
 
-                dboper.findDocuments(db, "dishes", (docs) => {
-                    console.log("Updated Documents:\n", docs);
-                    //db.dropCollection("dishes", (result) => {
-                    //    console.log("Dropped collection", result);
-                    //    database.close();
-                    //});
-                    database.close();
-                });
-            });
-        });
-    });
-});
+            return dboper.findDocuments(db, "dishes");
+        })
+        .then((docs) => {
+            console.log("Found Updated Documents:\n", docs);
+                            
+            //return db.dropCollection("dishes");
+            return Promise.resolve("Db Closed<>!");
+        })
+        .then((result) => {
+            console.log("Dropped Collection: ", result);
+
+            return database.close();
+        })
+        .catch((err) => console.log(err));
+
+})
+.catch((err) => console.log(err));
